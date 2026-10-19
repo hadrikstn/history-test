@@ -531,7 +531,7 @@
         { noUjian: "SH1-020", nama: "JORDAN ZILBIN HANDRIANO" },
         { noUjian: "SH1-021", nama: "LUTFIANA" },
         { noUjian: "SH1-022", nama: "MUADZ NAFIDZ SETYAWAN" },
-        { noUjian: "SH1-023", nama: "MUTI’AH" },
+        { noUjian: "SH1-023", nama: "MUTI AH" },
         { noUjian: "SH1-024", nama: "NAZWA FELISCA" },
         { noUjian: "SH1-025", nama: "NUZURUL FITRI APRIANI" },
         { noUjian: "SH1-026", nama: "PUJI TRIANINGSIH" },
@@ -590,7 +590,7 @@
         { noUjian: "SH3-010", nama: "FRIANDINI NADINE AGISTY" },
         { noUjian: "SH3-011", nama: "GERY" },
         { noUjian: "SH3-012", nama: "GILANG PRATAMA" },
-        { noUjian: "SH3-013", nama: "IHYA’" },
+        { noUjian: "SH3-013", nama: "IHYA " },
         { noUjian: "SH3-014", nama: "IMAM MULIA PRATAMA" },
         { noUjian: "SH3-015", nama: "IZZAZ ARIFF" },
         { noUjian: "SH3-016", nama: "MUHAMMAD ALFA REZI" },
@@ -677,7 +677,7 @@
         },
         {
           id: 3,
-          pertanyaan: "Perhatikan informasi berikut ini!<br>1) manusia sudah menggunakan berbagai peralatan yang terbuat dari logam<br>2) belum mempunyai rumah yang permanen dan sering berpindah-pindah (nomaden)<br>3) sudah mulai menetap di suatu tempat dan menjinakkan beberapa hewan untuk diternak<br>4) pada masa ini sudah dikembangkan kegiatan perekonomian yang berbasis agraris atau pertanian<br>5) sudah mengenal sistem masyarakat yang dipimpin oleh seorang kepala suku<br>Berdasarkan informasi di atas, ciri-ciri kehidupan pada masa bercocok tanam ditunjukkan pada nomor….",
+          pertanyaan: "Perhatikan informasi berikut ini!<br>1) manusia sudah menggunakan berbagai peralatan yang terbuat dari logam<br>2) belum mempunyai rumah yang permanen dan sering berpindah-pindah (nomaden)<br>3) sudah mulai menetap di suatu tempat dan menjinakkan beberapa hewan untuk diternak<br>4) pada masa ini sudah dikembangkan kegiatan perekonomian yang berbasis agraris atau pertanian<br>5) sudah mengenal sistem masyarakat yang dipimpin oleh seorang kepala suku<br>Berdasarkan informasi di atas, ciri-ciri kehidupan pada masa bercocok tanam ditunjukkan pada nomor .",
           pilihan: [
             { teks: "1), 2), dan 3)", benar: false },
             { teks: "1), 3), dan 5)", benar: false },
@@ -875,7 +875,7 @@
         },
         {
           id: 21,
-          pertanyaan: "Perhatikan informasi-informasi berikut!<br>1) bangsa Aztek membangun pulau buatan sendiri di tengah Danau Tekskoko untuk mengatasi keterbatasan wilayah geografis rawa<br>2) pulau buatan tersebut dimanfaatkan secara intensif sebagai wilayah pertanian yang sangat subur untuk menopang kebutuhan pangan kekaisaran<br>Berdasarkan informasi tersebut, pulau yang dimaksud adalah pulau….",
+          pertanyaan: "Perhatikan informasi-informasi berikut!<br>1) bangsa Aztek membangun pulau buatan sendiri di tengah Danau Tekskoko untuk mengatasi keterbatasan wilayah geografis rawa<br>2) pulau buatan tersebut dimanfaatkan secara intensif sebagai wilayah pertanian yang sangat subur untuk menopang kebutuhan pangan kekaisaran<br>Berdasarkan informasi tersebut, pulau yang dimaksud adalah pulau .",
           pilihan: [
             { teks: "Cayman Island", benar: false },
             { teks: "Baikal", benar: false },
@@ -1722,12 +1722,13 @@
         status: isDiskualifikasi ? "DISKUALIFIKASI (Kecurangan)" : "Selesai Normal"
       };
 
-      // Kirim otomatis ke Google Sheets
-      kirimKeGoogleSheets(dataHasil);
-
+      // 1. Masukkan data ke memori lokal laptop guru agar langsung tampil di Dashboard
       appState.rekapHasil.unshift(dataHasil);
       saveStandaloneData();
       updateDashboardGuruUI();
+
+      // 2. Kirim otomatis ke Google Sheets
+      kirimKeGoogleSheets(dataHasil);
 
       document.getElementById('portal-siswa-ujian').classList.add('hidden');
       document.getElementById('portal-siswa-hasil').classList.remove('hidden');

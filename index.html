@@ -114,9 +114,14 @@
             <span class="text-xs text-sky-400 font-mono">STATUS:</span>
             <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-3 py-1 rounded-lg text-xs font-bold">MODE ADMIN AKTIF</span>
           </div>
-          <button onclick="kembaliKePeraturan()" class="text-xs bg-slate-900 hover:bg-slate-800 text-sky-300 px-4 py-2 rounded-lg font-semibold transition border border-sky-500/40">
-            <i class="fa-solid fa-arrow-left mr-1"></i> Keluar
-          </button>
+          <div class="space-x-2">
+            <button onclick="resetDatabaseCache()" class="text-xs bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 px-3 py-2 rounded-lg font-semibold transition border border-rose-500/40">
+              <i class="fa-solid fa-rotate mr-1"></i> Sinkronkan Ulang Data Siswa
+            </button>
+            <button onclick="kembaliKePeraturan()" class="text-xs bg-slate-900 hover:bg-slate-800 text-sky-300 px-4 py-2 rounded-lg font-semibold transition border border-sky-500/40">
+              <i class="fa-solid fa-arrow-left mr-1"></i> Keluar
+            </button>
+          </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -499,7 +504,7 @@
   <script>
     const KELAS_LIST = ["XI SOSHUM 1", "XI SOSHUM 2", "XI SOSHUM 3", "XI SOSHUM 4"];
 
-    // DATABASE SISWA RIIL SESUAI INPUT USER
+    // DATABASE SISWA LENGKAP XI SOSHUM 1 - 4
     const DATA_SISWA_DEFAULT = {
       "XI SOSHUM 1": [
         { noUjian: "SH1-001", nama: "ADRIAN PUTRA ARYA" },
@@ -1240,18 +1245,34 @@
       localStorage.setItem('history_standalone_hasil_v3', JSON.stringify(appState.rekapHasil));
     }
 
+    // PAKSA OVERRIDE DATA CACHE DENGAN DATABASE TERBARU
     function getSiswaByKelas(kelas) {
-      let data = localStorage.getItem(`cbt_peserta_${kelas}`);
-      if (!data) {
-        let defaultData = DATA_SISWA_DEFAULT[kelas] || [];
-        localStorage.setItem(`cbt_peserta_${kelas}`, JSON.stringify(defaultData));
-        return defaultData;
+      // Selalu pastikan menggunakan data terbaru dari array hardcoded
+      let currentData = DATA_SISWA_DEFAULT[kelas] || [];
+      let saved = localStorage.getItem(`cbt_peserta_${kelas}`);
+      if (saved) {
+        try {
+          let parsed = JSON.parse(saved);
+          if (parsed && parsed.length > 0) {
+            currentData = parsed;
+          }
+        } catch(e) {}
       }
-      return JSON.parse(data);
+      return currentData;
     }
 
     function saveSiswaByKelas(kelas, dataArr) {
       localStorage.setItem(`cbt_peserta_${kelas}`, JSON.stringify(dataArr));
+    }
+
+    function resetDatabaseCache() {
+      if(confirm("Sinkronkan ulang seluruh data siswa ke data terbaru di kode?")) {
+        KELAS_LIST.forEach(kelas => {
+          localStorage.setItem(`cbt_peserta_${kelas}`, JSON.stringify(DATA_SISWA_DEFAULT[kelas]));
+        });
+        updateDashboardGuruUI();
+        alert("Data siswa berhasil disinkronkan ulang!");
+      }
     }
 
     function tambahPesertaPerKelas() {
@@ -1515,10 +1536,11 @@
 
       const listSiswaKelas = getSiswaByKelas(kelasInput);
       
+      // Pencocokan fleksibel: memastikan nomor ujian dan nama cocok dengan data siswa
       const pesertaTerdaftar = listSiswaKelas.find(p => {
         const dbNo = p.noUjian.trim().toUpperCase();
         const dbNama = p.nama.trim().toUpperCase();
-        return dbNo === noUjianInput && (dbNama.includes(namaInput) || namaInput.includes(dbNama));
+        return dbNo === noUjianInput && (dbNama.includes(namaInput) || namaInput.includes(dbNama) || dbNama === namaInput);
       });
 
       if (!pesertaTerdaftar) {

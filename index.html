@@ -1236,7 +1236,13 @@
         appState.durasiMenit = parsed.durasiMenit || 60;
       }
       const savedHasil = localStorage.getItem('history_standalone_hasil_v3');
-      if(savedHasil) appState.rekapHasil = JSON.parse(savedHasil);
+      if(savedHasil) {
+        try {
+          appState.rekapHasil = JSON.parse(savedHasil);
+        } catch(e) {
+          appState.rekapHasil = [];
+        }
+      }
     }
 
     function saveStandaloneData() {
@@ -1245,7 +1251,6 @@
       localStorage.setItem('history_standalone_hasil_v3', JSON.stringify(appState.rekapHasil));
     }
 
-    // FUNGSI MEMUAT DATA PESERTA LANGSUNG DARI DATABASE KODE
     function getSiswaByKelas(kelas) {
       return DATA_SISWA_DEFAULT[kelas] || [];
     }
@@ -1520,12 +1525,10 @@
       if(token !== appState.token) { alert("Token Ujian Salah!"); return; }
 
       const listSiswaKelas = getSiswaByKelas(kelasInput);
-      
-      // LOGIKA BARU: Hanya mencocokkan Nomor Ujian dengan tepat, nama diinput otomatis dari database agar pasti lolos
       const pesertaTerdaftar = listSiswaKelas.find(p => p.noUjian.trim().toUpperCase() === noUjianInput);
 
       if (!pesertaTerdaftar) {
-        alert(`GAGAL: Nomor Peserta "${document.getElementById('siswa-noujian').value}" tidak ditemukan di kelas ${kelasInput}! Periksa kembali nomor ujian Anda.`);
+        alert(`GAGAL: Nomor Peserta "${document.getElementById('siswa-noujian').value}" tidak ditemukan di kelas ${kelasInput}!`);
         return;
       }
 
@@ -1535,8 +1538,13 @@
         return;
       }
 
-      // Gunakan nama resmi dari database agar seragam dan aman
-      appState.siswaAktif = { nama: pesertaTerdaftar.nama, noUjian: pesertaTerdaftar.noUjian, kelas: kelasInput };
+      // Pastikan data siswa aktif tersimpan lengkap dengan nama dari database atau inputan siswa
+      appState.siswaAktif = { 
+        nama: namaInput || pesertaTerdaftar.nama, 
+        noUjian: pesertaTerdaftar.noUjian, 
+        kelas: kelasInput 
+      };
+
       appState.jawabanSiswa = {};
       appState.raguSiswa = {};
       appState.soalIndexAktif = 0;
@@ -1550,7 +1558,7 @@
 
       document.getElementById('portal-siswa-login').classList.add('hidden');
       document.getElementById('portal-siswa-ujian').classList.remove('hidden');
-      document.getElementById('ujian-info-siswa').innerText = `Siswa: ${pesertaTerdaftar.nama} (${kelasInput})`;
+      document.getElementById('ujian-info-siswa').innerText = `Siswa: ${appState.siswaAktif.nama} (${kelasInput})`;
       document.getElementById('ujian-info-noujian').innerText = `No: ${pesertaTerdaftar.noUjian}`;
       document.getElementById('header-badge-kelas').innerText = `${kelasInput}`;
 
@@ -1672,6 +1680,11 @@
       document.getElementById('modal-toilet').classList.add('hidden');
       document.getElementById('modal-lanjut-toilet').classList.add('hidden');
 
+      if (!appState.siswaAktif) {
+        alert("Sesi siswa tidak valid!");
+        return;
+      }
+
       let jumlahBenar = 0;
       let jumlahSalah = 0;
       appState.soal.forEach(soal => {
@@ -1684,6 +1697,7 @@
       const totalSoal = appState.soal.length;
       let skorFinal = totalSoal > 0 ? Number(((jumlahBenar / totalSoal) * 100).toFixed(1)) : 0;
       const lamaDetik = (appState.durasiMenit * 60) - appState.sisaDetik;
+      
       const dataHasil = {
         waktu: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
         kelas: appState.siswaAktif.kelas,
@@ -1697,6 +1711,7 @@
         status: isDiskualifikasi ? "DISKUALIFIKASI (Kecurangan)" : "Selesai Normal"
       };
 
+      // Pastikan rekap dimasukkan ke awal array dan langsung disimpan ke localStorage
       appState.rekapHasil.unshift(dataHasil);
       saveStandaloneData();
       updateDashboardGuruUI();

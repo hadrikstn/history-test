@@ -1245,34 +1245,19 @@
       localStorage.setItem('history_standalone_hasil_v3', JSON.stringify(appState.rekapHasil));
     }
 
-    // PAKSA OVERRIDE DATA CACHE DENGAN DATABASE TERBARU
+    // FUNGSI MEMUAT DATA PESERTA LANGSUNG DARI DATABASE KODE
     function getSiswaByKelas(kelas) {
-      // Selalu pastikan menggunakan data terbaru dari array hardcoded
-      let currentData = DATA_SISWA_DEFAULT[kelas] || [];
-      let saved = localStorage.getItem(`cbt_peserta_${kelas}`);
-      if (saved) {
-        try {
-          let parsed = JSON.parse(saved);
-          if (parsed && parsed.length > 0) {
-            currentData = parsed;
-          }
-        } catch(e) {}
-      }
-      return currentData;
+      return DATA_SISWA_DEFAULT[kelas] || [];
     }
 
     function saveSiswaByKelas(kelas, dataArr) {
-      localStorage.setItem(`cbt_peserta_${kelas}`, JSON.stringify(dataArr));
+      DATA_SISWA_DEFAULT[kelas] = dataArr;
     }
 
     function resetDatabaseCache() {
-      if(confirm("Sinkronkan ulang seluruh data siswa ke data terbaru di kode?")) {
-        KELAS_LIST.forEach(kelas => {
-          localStorage.setItem(`cbt_peserta_${kelas}`, JSON.stringify(DATA_SISWA_DEFAULT[kelas]));
-        });
-        updateDashboardGuruUI();
-        alert("Data siswa berhasil disinkronkan ulang!");
-      }
+      localStorage.clear();
+      alert("Memori browser dibersihkan dan data peserta disinkronkan ulang!");
+      location.reload();
     }
 
     function tambahPesertaPerKelas() {
@@ -1536,15 +1521,11 @@
 
       const listSiswaKelas = getSiswaByKelas(kelasInput);
       
-      // Pencocokan fleksibel: memastikan nomor ujian dan nama cocok dengan data siswa
-      const pesertaTerdaftar = listSiswaKelas.find(p => {
-        const dbNo = p.noUjian.trim().toUpperCase();
-        const dbNama = p.nama.trim().toUpperCase();
-        return dbNo === noUjianInput && (dbNama.includes(namaInput) || namaInput.includes(dbNama) || dbNama === namaInput);
-      });
+      // LOGIKA BARU: Hanya mencocokkan Nomor Ujian dengan tepat, nama diinput otomatis dari database agar pasti lolos
+      const pesertaTerdaftar = listSiswaKelas.find(p => p.noUjian.trim().toUpperCase() === noUjianInput);
 
       if (!pesertaTerdaftar) {
-        alert(`GAGAL: Nomor Peserta "${document.getElementById('siswa-noujian').value}" atau Nama tidak cocok di kelas ${kelasInput}! Periksa kembali data Anda.`);
+        alert(`GAGAL: Nomor Peserta "${document.getElementById('siswa-noujian').value}" tidak ditemukan di kelas ${kelasInput}! Periksa kembali nomor ujian Anda.`);
         return;
       }
 
@@ -1554,6 +1535,7 @@
         return;
       }
 
+      // Gunakan nama resmi dari database agar seragam dan aman
       appState.siswaAktif = { nama: pesertaTerdaftar.nama, noUjian: pesertaTerdaftar.noUjian, kelas: kelasInput };
       appState.jawabanSiswa = {};
       appState.raguSiswa = {};

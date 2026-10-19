@@ -109,14 +109,14 @@
 
       <!-- DASHBOARD GURU -->
       <div id="guru-dashboard" class="hidden space-y-6">
-        <div class="flex justify-between items-center hud-card px-6 py-4 rounded-xl">
+        <div class="flex justify-between items-center hud-card px-6 py-4 rounded-xl flex-wrap gap-3">
           <div class="flex items-center space-x-3">
             <span class="text-xs text-sky-400 font-mono">STATUS:</span>
             <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-3 py-1 rounded-lg text-xs font-bold">MODE ADMIN AKTIF</span>
           </div>
           <div class="space-x-2">
             <button onclick="resetDatabaseCache()" class="text-xs bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 px-3 py-2 rounded-lg font-semibold transition border border-rose-500/40">
-              <i class="fa-solid fa-rotate mr-1"></i> Sinkronkan Ulang Data Siswa
+              <i class="fa-solid fa-rotate mr-1"></i> Sinkronkan Data
             </button>
             <button onclick="kembaliKePeraturan()" class="text-xs bg-slate-900 hover:bg-slate-800 text-sky-300 px-4 py-2 rounded-lg font-semibold transition border border-sky-500/40">
               <i class="fa-solid fa-arrow-left mr-1"></i> Keluar
@@ -478,7 +478,7 @@
       </div>
       <div>
         <h2 id="hasil-title" class="text-2xl font-black text-white tracking-wider uppercase">Ujian Selesai!</h2>
-        <p id="hasil-subtitle" class="text-xs text-sky-300/80 font-mono mt-1">Jawaban Anda telah tersimpan dengan aman.</p>
+        <p id="hasil-subtitle" class="text-xs text-sky-300/80 font-mono mt-1">Jawaban Anda telah terkirim otomatis ke guru.</p>
       </div>
 
       <div class="bg-slate-950 p-5 rounded-xl border border-sky-500/40 space-y-4 shadow-inner">
@@ -502,9 +502,11 @@
   </div>
 
   <script>
+    // MASUKKAN URL WEB APP GOOGLE APPS SCRIPT DI SINI:
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwc8K4dDXb2t2yVPNS0S7FQLM-F3ghV116oTUMjo5Qqogz1Q5wrwz74GN9Sp-HvDED-CQ/exec"; 
+
     const KELAS_LIST = ["XI SOSHUM 1", "XI SOSHUM 2", "XI SOSHUM 3", "XI SOSHUM 4"];
 
-    // DATABASE SISWA LENGKAP XI SOSHUM 1 - 4
     const DATA_SISWA_DEFAULT = {
       "XI SOSHUM 1": [
         { noUjian: "SH1-001", nama: "ADRIAN PUTRA ARYA" },
@@ -1265,6 +1267,16 @@
       location.reload();
     }
 
+    function kirimKeGoogleSheets(dataHasil) {
+      if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === "") return;
+      fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dataHasil)
+      }).catch(err => console.log("Kirim sheets gagal:", err));
+    }
+
     function tambahPesertaPerKelas() {
       const kelasPilih = document.getElementById('pilih-kelas-import').value;
       const rawText = document.getElementById('input-peserta-manual').value.trim();
@@ -1538,7 +1550,6 @@
         return;
       }
 
-      // Pastikan data siswa aktif tersimpan lengkap dengan nama dari database atau inputan siswa
       appState.siswaAktif = { 
         nama: namaInput || pesertaTerdaftar.nama, 
         noUjian: pesertaTerdaftar.noUjian, 
@@ -1711,7 +1722,9 @@
         status: isDiskualifikasi ? "DISKUALIFIKASI (Kecurangan)" : "Selesai Normal"
       };
 
-      // Pastikan rekap dimasukkan ke awal array dan langsung disimpan ke localStorage
+      // Kirim otomatis ke Google Sheets
+      kirimKeGoogleSheets(dataHasil);
+
       appState.rekapHasil.unshift(dataHasil);
       saveStandaloneData();
       updateDashboardGuruUI();

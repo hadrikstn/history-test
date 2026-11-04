@@ -1285,11 +1285,20 @@
     
     if (Array.isArray(result) && result.length > 0) {
       appState.rekapHasil = result.map(item => {
-        // Mengambil data berdasarkan kunci objek atau urutan properti dari spreadsheet
         const keys = Object.keys(item);
+        let rawWaktu = item[keys[0]] || item["Waktu Selesai"] || item["waktu"] || "-";
         
+        // Format ulang jika waktu berupa format tanggal ISO / Date dari Spreadsheet
+        let waktuFormatted = rawWaktu;
+        if (rawWaktu.includes("T") && rawWaktu.includes("Z")) {
+          const dateObj = new Date(rawWaktu);
+          if (!isNaN(dateObj.getTime())) {
+            waktuFormatted = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          }
+        }
+
         return {
-          waktu: item[keys[0]] || item["Waktu Selesai"] || item["waktu"] || "-",
+          waktu: waktuFormatted,
           kelas: item[keys[1]] || item["Kelas"] || item["kelas"] || "-",
           noUjian: item[keys[2]] || item["No Ujian"] || item["noUjian"] || "-",
           nama: item[keys[3]] || item["Nama Siswa"] || item["nama"] || "-",

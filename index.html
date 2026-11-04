@@ -1272,43 +1272,46 @@
 
     // FUNGSI BARU: Tarik Data dari Spreadsheet ke Dashboard Guru
     async function tarikDataDariSpreadsheet() {
-      if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === "") {
-        alert("URL Google Script belum diatur!");
-        return;
-      }
+  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === "") {
+    alert("URL Google Script belum diatur!");
+    return;
+  }
 
-      alert("Menghubungkan ke Google Spreadsheet untuk menarik data terbaru...");
+  alert("Menghubungkan ke Google Spreadsheet untuk menarik data terbaru...");
+  
+  try {
+    const response = await fetch(GOOGLE_SCRIPT_URL);
+    const result = await response.json();
+    
+    if (Array.isArray(result) && result.length > 0) {
+      appState.rekapHasil = result.map(item => {
+        // Mencari nilai berdasarkan berbagai kemungkinan nama kolom (antisipasi beda spasi/huruf)
+        const waktu = item["Waktu Selesai"] || item["waktu Selesai"] || item["waktu"] || "-";
+        const kelas = item["Kelas"] || item["kelas"] || "-";
+        const noUjian = item["No Ujian"] || item["no Ujian"] || item["no_ujian"] || item["noUjian"] || "-";
+        const nama = item["Nama Siswa"] || item["nama Siswa"] || item["nama"] || "-";
+        const skor = parseFloat(item["Nilai Final"] || item["nilai Final"] || item["skor"] || 0);
+        const benar = parseInt(item["Benar"] || item["benar"] || 0);
+        const salah = parseInt(item["Salah"] || item["salah"] || 0);
+        const lamaKerja = item["Lama Kerjakan"] || item["lama Kerjakan"] || item["lamaKerja"] || "-";
+        const sisaWaktu = item["Sisa Waktu"] || item["sisa Waktu"] || item["sisaWaktu"] || "-";
+        const status = item["Status"] || item["status"] || "Selesai Normal";
+
+        return { waktu, kelas, noUjian, nama, skor, benar, salah, lamaKerja, sisaWaktu, status };
+      });
+
+      saveStandaloneData();
+      updateDashboardGuruUI();
       
-      try {
-        const response = await fetch(GOOGLE_SCRIPT_URL);
-        const result = await response.json();
-        
-        if (Array.isArray(result) && result.length > 0) {
-          appState.rekapHasil = result.map(item => ({
-            waktu: item["Waktu Selesai"] || item["waktu"] || "-",
-            kelas: item["Kelas"] || item["kelas"] || "-",
-            noUjian: item["No Ujian"] || item["noUjian"] || "-",
-            nama: item["Nama Siswa"] || item["nama"] || "-",
-            skor: parseFloat(item["Nilai Final"] || item["skor"] || 0),
-            benar: parseInt(item["Benar"] || item["benar"] || 0),
-            salah: parseInt(item["Salah"] || item["salah"] || 0),
-            lamaKerja: item["Lama Kerjakan"] || item["lamaKerja"] || "-",
-            sisaWaktu: item["Sisa Waktu"] || item["sisaWaktu"] || "-",
-            status: item["Status"] || item["status"] || "Selesai Normal"
-          }));
-
-          saveStandaloneData();
-          updateDashboardGuruUI();
-          
-          alert(`Berhasil! ${appState.rekapHasil.length} data hasil ujian berhasil ditarik dari Spreadsheet.`);
-        } else {
-          alert("Spreadsheet kosong atau format data tidak dikenali.");
-        }
-      } catch (error) {
-        console.error("Gagal menarik data:", error);
-        alert("Gagal terhubung ke Spreadsheet. Pastikan URL Web App benar dan deployment Apps Script sudah diperbarui.");
-      }
+      alert(`Berhasil! ${appState.rekapHasil.length} data rekap berhasil ditarik dari Spreadsheet.`);
+    } else {
+      alert("Spreadsheet kosong atau format data tidak dikenali.");
     }
+  } catch (error) {
+    console.error("Gagal menarik data:", error);
+    alert("Gagal terhubung ke Spreadsheet. Pastikan URL Web App benar dan deployment Apps Script sudah diperbarui.");
+  }
+}
 
     function kirimKeGoogleSheets(dataHasil) {
       if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === "") return;

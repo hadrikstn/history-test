@@ -114,12 +114,15 @@
             <span class="text-xs text-sky-400 font-mono">STATUS:</span>
             <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-3 py-1 rounded-lg text-xs font-bold">MODE ADMIN AKTIF</span>
           </div>
-          <div class="space-x-2">
-            <button onclick="resetDatabaseCache()" class="text-xs bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 px-3 py-2 rounded-lg font-semibold transition border border-rose-500/40">
-              <i class="fa-solid fa-rotate mr-1"></i> Sinkronkan Data
+          <div class="space-x-2 flex flex-wrap gap-2">
+            <button onclick="tarikDataDariSpreadsheet()" class="text-xs bg-sky-600 hover:bg-sky-500 text-white px-3 py-2 rounded-lg font-semibold transition border border-sky-400 shadow-sm flex items-center">
+              <i class="fa-solid fa-cloud-arrow-down mr-1.5"></i> Tarik Data Spreadsheet
             </button>
-            <button onclick="kembaliKePeraturan()" class="text-xs bg-slate-900 hover:bg-slate-800 text-sky-300 px-4 py-2 rounded-lg font-semibold transition border border-sky-500/40">
-              <i class="fa-solid fa-arrow-left mr-1"></i> Keluar
+            <button onclick="resetDatabaseCache()" class="text-xs bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 px-3 py-2 rounded-lg font-semibold transition border border-rose-500/40 flex items-center">
+              <i class="fa-solid fa-rotate mr-1.5"></i> Reset Lokal
+            </button>
+            <button onclick="kembaliKePeraturan()" class="text-xs bg-slate-900 hover:bg-slate-800 text-sky-300 px-4 py-2 rounded-lg font-semibold transition border border-sky-500/40 flex items-center">
+              <i class="fa-solid fa-arrow-left mr-1.5"></i> Keluar
             </button>
           </div>
         </div>
@@ -1142,7 +1145,7 @@
           pertanyaan: "Revolusi Industri membawa perubahan besar dalam kehidupan masyarakat. Berikut ini yang bukan merupakan akibat atau dampak dari Revolusi Industri di bidang sosial adalah...",
           pilihan: [
             { teks: "Terjadinya urbanisasi besar-besaran penduduk desa ke kota-kota industri seperti Manchester dan Liverpool", benar: false },
-            { teks: "Upah buruh rendah karena melimpahnya jumlah tenaga kerja yang bersaing dengan penggunaan mesin pabrik", benar: false },
+            { teks: "Upaya buruh rendah karena melimpahnya jumlah tenaga kerja yang bersaing dengan penggunaan mesin pabrik", benar: false },
             { teks: "Kondisi kehidupan kaum buruh di sekitar kawasan industri yang sangat buruk dan memprihatinkan", benar: false },
             { teks: "Adanya jurang pemisah dan kesenjangan sosial yang sangat tajam antara kaum majikan yang kaya dan buruh yang menderita", benar: false },
             { teks: "Dihapuskannya seluruh sistem kapitalisme modern secara permanen dan digantikan oleh pemerataan kekayaan mutlak tanpa kelas", benar: true }
@@ -1265,6 +1268,46 @@
       localStorage.clear();
       alert("Memori browser dibersihkan dan data peserta disinkronkan ulang!");
       location.reload();
+    }
+
+    // FUNGSI BARU: Tarik Data dari Spreadsheet ke Dashboard Guru
+    async function tarikDataDariSpreadsheet() {
+      if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === "") {
+        alert("URL Google Script belum diatur!");
+        return;
+      }
+
+      alert("Menghubungkan ke Google Spreadsheet untuk menarik data terbaru...");
+      
+      try {
+        const response = await fetch(GOOGLE_SCRIPT_URL);
+        const result = await response.json();
+        
+        if (Array.isArray(result) && result.length > 0) {
+          appState.rekapHasil = result.map(item => ({
+            waktu: item["Waktu Selesai"] || item["waktu"] || "-",
+            kelas: item["Kelas"] || item["kelas"] || "-",
+            noUjian: item["No Ujian"] || item["noUjian"] || "-",
+            nama: item["Nama Siswa"] || item["nama"] || "-",
+            skor: parseFloat(item["Nilai Final"] || item["skor"] || 0),
+            benar: parseInt(item["Benar"] || item["benar"] || 0),
+            salah: parseInt(item["Salah"] || item["salah"] || 0),
+            lamaKerja: item["Lama Kerjakan"] || item["lamaKerja"] || "-",
+            sisaWaktu: item["Sisa Waktu"] || item["sisaWaktu"] || "-",
+            status: item["Status"] || item["status"] || "Selesai Normal"
+          }));
+
+          saveStandaloneData();
+          updateDashboardGuruUI();
+          
+          alert(`Berhasil! ${appState.rekapHasil.length} data hasil ujian berhasil ditarik dari Spreadsheet.`);
+        } else {
+          alert("Spreadsheet kosong atau format data tidak dikenali.");
+        }
+      } catch (error) {
+        console.error("Gagal menarik data:", error);
+        alert("Gagal terhubung ke Spreadsheet. Pastikan URL Web App benar dan deployment Apps Script sudah diperbarui.");
+      }
     }
 
     function kirimKeGoogleSheets(dataHasil) {
@@ -1722,12 +1765,9 @@
         status: isDiskualifikasi ? "DISKUALIFIKASI (Kecurangan)" : "Selesai Normal"
       };
 
-      // 1. Masukkan data ke memori lokal laptop guru agar langsung tampil di Dashboard
       appState.rekapHasil.unshift(dataHasil);
       saveStandaloneData();
       updateDashboardGuruUI();
-
-      // 2. Kirim otomatis ke Google Sheets
       kirimKeGoogleSheets(dataHasil);
 
       document.getElementById('portal-siswa-ujian').classList.add('hidden');

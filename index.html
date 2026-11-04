@@ -1285,19 +1285,21 @@
     
     if (Array.isArray(result) && result.length > 0) {
       appState.rekapHasil = result.map(item => {
-        // Mencari nilai berdasarkan berbagai kemungkinan nama kolom (antisipasi beda spasi/huruf)
-        const waktu = item["Waktu Selesai"] || item["waktu Selesai"] || item["waktu"] || "-";
-        const kelas = item["Kelas"] || item["kelas"] || "-";
-        const noUjian = item["No Ujian"] || item["no Ujian"] || item["no_ujian"] || item["noUjian"] || "-";
-        const nama = item["Nama Siswa"] || item["nama Siswa"] || item["nama"] || "-";
-        const skor = parseFloat(item["Nilai Final"] || item["nilai Final"] || item["skor"] || 0);
-        const benar = parseInt(item["Benar"] || item["benar"] || 0);
-        const salah = parseInt(item["Salah"] || item["salah"] || 0);
-        const lamaKerja = item["Lama Kerjakan"] || item["lama Kerjakan"] || item["lamaKerja"] || "-";
-        const sisaWaktu = item["Sisa Waktu"] || item["sisa Waktu"] || item["sisaWaktu"] || "-";
-        const status = item["Status"] || item["status"] || "Selesai Normal";
-
-        return { waktu, kelas, noUjian, nama, skor, benar, salah, lamaKerja, sisaWaktu, status };
+        // Mengambil data berdasarkan kunci objek atau urutan properti dari spreadsheet
+        const keys = Object.keys(item);
+        
+        return {
+          waktu: item[keys[0]] || item["Waktu Selesai"] || item["waktu"] || "-",
+          kelas: item[keys[1]] || item["Kelas"] || item["kelas"] || "-",
+          noUjian: item[keys[2]] || item["No Ujian"] || item["noUjian"] || "-",
+          nama: item[keys[3]] || item["Nama Siswa"] || item["nama"] || "-",
+          skor: parseFloat(item[keys[4]] || item["Nilai Final"] || item["skor"] || 0),
+          benar: parseInt(item[keys[5]] || item["Benar"] || item["benar"] || 0),
+          salah: parseInt(item[keys[6]] || item["Salah"] || item["salah"] || 0),
+          lamaKerja: item[keys[7]] || item["Lama Kerjakan"] || item["lamaKerja"] || "-",
+          sisaWaktu: item[keys[8]] || item["Sisa Waktu"] || item["sisaWaktu"] || "-",
+          status: item[keys[9]] || item["Status"] || item["status"] || "Selesai Normal"
+        };
       });
 
       saveStandaloneData();
